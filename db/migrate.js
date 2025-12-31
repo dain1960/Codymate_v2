@@ -3,7 +3,7 @@ const path = require("path");
 const { db } = require("./client");
 
 function migrate() {
-  const dir = path.join(__dirname, "db", "migrations");
+  const dir = path.join(__dirname, "migrations");
 
   const files = fs
     .readdirSync(dir)

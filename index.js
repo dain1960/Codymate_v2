@@ -1,7 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, MessageFlags } = require("discord.js");
+
 require("dotenv").config(); // ✅ .env 로드
+
+const { migrate } = require("./db/migrate"); // ⚠️ migrate.js 위치에 맞게 수정
+migrate(); // ✅ 서버 시작할 때 테이블 자동 생성
 
 function walkJsFiles(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -80,9 +84,9 @@ client.on("interactionCreate", async (interaction) => {
     console.error(e);
     const msg = "처리 중 오류가 발생했습니다.";
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: msg, ephemeral: true });
+      await interaction.followUp({ content: msg, flags: MessageFlags.Ephemeral });
     } else {
-      await interaction.reply({ content: msg, ephemeral: true });
+      await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
     }
   }
 });
