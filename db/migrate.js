@@ -1,14 +1,19 @@
+const fs = require("fs");
+const path = require("path");
 const { db } = require("./client");
 
 function migrate() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      user_id TEXT PRIMARY KEY,
-      step INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
+  const dir = path.join(__dirname, "db", "migrations");
+
+  const files = fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith(".sql"))
+    .sort();
+
+  for (const file of files) {
+    const sql = fs.readFileSync(path.join(dir, file), "utf8");
+    db.exec(sql);
+  }
 }
 
 module.exports = { migrate };

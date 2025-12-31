@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
+require("dotenv").config(); // ✅ .env 로드
 
 function walkJsFiles(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -20,15 +21,53 @@ function loadCommandExecutors() {
   const map = new Collection();
   for (const file of files) {
     const mod = require(file);
+
+    // ✅ 커맨드 형식 검증
+    if (!mod?.data?.name || typeof mod.execute !== "function") {
+      console.warn(`⚠️ 커맨드 형식 아님. 스킵: ${file}`);
+      continue;
+    }
+
     map.set(mod.data.name, mod);
   }
   return map;
 }
 
+/**
+ * ✅ events 폴더의 이벤트 모듈을 로드해서 client에 등록
+ * 이벤트 모듈 형식:
+ * module.exports = { name: "ready", once: true, execute(client){...} }
+ */
+function registerEvents(client) {
+  const eventsDir = path.join(__dirname, "events");
+  const files = walkJsFiles(eventsDir);
+
+  for (const file of files) {
+    const event = require(file);
+
+    // ✅ 이벤트 형식 검증
+    if (!event?.name || typeof event.execute !== "function") {
+      console.warn(`⚠️ 이벤트 형식 아님. 스킵: ${file}`);
+      continue;
+    }
+
+    if (event.once) {
+      client.once(event.name, (...args) => event.execute(...args));
+    } else {
+      client.on(event.name, (...args) => event.execute(...args));
+    }
+  }
+}
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
+// ✅ 1) 커맨드 로드
 client.commands = loadCommandExecutors();
 
+// ✅ 2) 이벤트 등록 (ready가 여기서 연결됨)
+registerEvents(client);
+
+// ✅ 3) interactionCreate 처리
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -48,4 +87,5 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
+// ✅ 토큰 로그인
 client.login(process.env.DISCORD_TOKEN);
