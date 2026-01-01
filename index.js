@@ -71,25 +71,5 @@ client.commands = loadCommandExecutors();
 // ✅ 2) 이벤트 등록 (ready가 여기서 연결됨)
 registerEvents(client);
 
-// ✅ 3) interactionCreate 처리
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-
-  const cmd = client.commands.get(interaction.commandName);
-  if (!cmd) return;
-
-  try {
-    await cmd.execute(interaction);
-  } catch (e) {
-    console.error(e);
-    const msg = "처리 중 오류가 발생했습니다.";
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: msg, flags: MessageFlags.Ephemeral });
-    } else {
-      await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
-    }
-  }
-});
-
 // ✅ 토큰 로그인
 client.login(process.env.DISCORD_TOKEN);
